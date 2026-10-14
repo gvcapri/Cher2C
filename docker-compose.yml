@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cher2c
+      POSTGRES_PASSWORD: cher2c_dev_password
+      POSTGRES_DB: cher2c
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cher2c"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis (opcional p/ MVP single-node, usado pelo LiveKit p/ multi-node)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # LiveKit SFU (self-hosted)
+  livekit:
+    image: livekit/livekit-server:v1.8.0
+    command: ["--config", "/etc/livekit.yaml", "--dev"]
+    ports:
+      - "7880:7880"   # WebSocket/SFU
+      - "7881:7881"   # TCP fallback
+      - "50000-50100:50000-50100/udp"  # RTC UDP (mídia)
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:7880"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:

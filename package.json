@@ -1,0 +1,26 @@
+{
+  "name": "cher2c",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:desktop\"",
+    "dev:server": "npm run --workspace=server dev",
+    "dev:desktop": "npm run --workspace=desktop dev",
+    "build": "npm run build:shared && npm run build:server && npm run build:desktop",
+    "build:shared": "npm run --workspace=@cher2c/shared build",
+    "build:server": "npm run --workspace=server build",
+    "build:desktop": "npm run --workspace=desktop build",
+    "db:generate": "npm run --workspace=server db:generate",
+    "db:migrate": "npm run --workspace=server db:migrate",
+    "db:push": "npm run --workspace=server db:push",
+    "db:studio": "npm run --workspace=server db:studio"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "drizzle-orm": "^0.45.4"
+  }
+}

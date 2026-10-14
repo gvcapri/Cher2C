@@ -1,0 +1,51 @@
+graph TB
+    subgraph "Cliente - Electron + React + TS"
+        UI[UI React<br/>Canais, Voz, Share, Debug]
+        MM[Media Manager<br/>Captura Mic + Tela/Áudio<br/>Separação de Tracks]
+        LC[LiveKit Client SDK<br/>WebRTC + Simulcast + BWE]
+        WS[WebSocket Client<br/>Socket.IO - Presença/Chat]
+        
+        UI --> MM
+        UI --> LC
+        UI --> WS
+        MM --> LC
+    end
+    
+    subgraph "Backend - Node + TS"
+        API[API REST<br/>Fastify - Auth, Servers, Channels]
+        AUTH[Auth Service<br/>JWT + OAuth]
+        WSS[WebSocket Server<br/>Socket.IO - Sinalização, Chat, Presença]
+        TK[Token Service<br/>LiveKit JWT Tokens]
+        DB[(PostgreSQL<br/>Users, Servers, Channels, Members)]
+    end
+    
+    subgraph "SFU - LiveKit Self-Hosted"
+        LKS[LiveKit Server<br/>Rooms, Routing, Simulcast/SVC<br/>BWE + Priorização Áudio]
+        TURN[Coturn/STUN<br/>NAT Traversal]
+    end
+    
+    subgraph "Infra"
+        REDIS[(Redis<br/>Opcional p/ Multi-node)]
+    end
+    
+    UI --> API
+    API --> AUTH
+    API --> DB
+    API --> TK
+    WS --> WSS
+    WSS --> DB
+    TK --> LKS
+    LC <--WebRTC--> LKS
+    LKS <--STUN/TURN--> TURN
+    LKS -.-> REDIS
+    
+    style LC fill:#e1f5ff
+    style LKS fill:#e1f5ff
+    style MM fill:#fff3e0
+```
+
+## Legenda
+- **Azul (WebRTC/SFU):** Caminho crítico de mídia com prioridade absoluta ao áudio
+- **Laranja (Media):** Captura e separação estrita de tracks (voz vs áudio tela)
+- **Áudio e Vídeo seguem tracks separados** até o subscriber; SFU replica por camada (simulcast) sem afetar outros espectadores
+- **BWE protege áudio:** Degradação vídeo (res→fps→camadas) antes de tocar bitrate de áudio
