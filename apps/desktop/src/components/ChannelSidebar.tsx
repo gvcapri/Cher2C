@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAppStore } from '../store'
 
 export function ChannelSidebar() {
@@ -8,6 +8,20 @@ export function ChannelSidebar() {
   const selectServer = useAppStore((s) => s.selectServer)
   const joinVoice = useAppStore((s) => s.joinVoice)
   const voiceChannelId = useAppStore((s) => s.voiceChannelId)
+  const joinServer = useAppStore((s) => s.joinServer)
+  const [joinCode, setJoinCode] = useState('')
+  const [joinError, setJoinError] = useState<string | null>(null)
+
+  const handleJoin = async () => {
+    if (!joinCode.trim()) return
+    setJoinError(null)
+    try {
+      await joinServer(joinCode.trim())
+      setJoinCode('')
+    } catch (e) {
+      setJoinError(e instanceof Error ? e.message : 'Falha ao entrar')
+    }
+  }
 
   useEffect(() => {
     if (!activeServerId && servers.length > 0) {
@@ -42,6 +56,47 @@ export function ChannelSidebar() {
             {srv.name.slice(0, 2).toUpperCase()}
           </button>
         ))}
+
+        {/* Entrar em servidor por código de convite */}
+        <div style={{ marginTop: 8 }}>
+          <input
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value)}
+            placeholder="código"
+            title="ID do servidor (convite)"
+            style={{
+              width: 48,
+              boxSizing: 'border-box',
+              fontSize: 11,
+              padding: '4px 2px',
+              borderRadius: 4,
+              border: '1px solid #333',
+              background: '#1e1f22',
+              color: '#dbdee1'
+            }}
+          />
+          <button
+            onClick={() => void handleJoin()}
+            title="Entrar no servidor com código"
+            style={{
+              display: 'block',
+              width: 48,
+              height: 28,
+              marginTop: 4,
+              fontSize: 16,
+              borderRadius: 6,
+              background: '#2b2d31',
+              color: '#fff',
+              border: '1px dashed #4e5058',
+              cursor: 'pointer'
+            }}
+          >
+            +
+          </button>
+          {joinError && (
+            <div style={{ color: '#f23f43', fontSize: 10, marginTop: 4 }}>{joinError}</div>
+          )}
+        </div>
       </div>
 
       {/* Coluna de canais */}

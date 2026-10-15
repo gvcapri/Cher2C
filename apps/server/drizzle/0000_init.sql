@@ -11,12 +11,13 @@ CREATE TABLE "channels" (
 );
 --> statement-breakpoint
 CREATE TABLE "members" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" uuid DEFAULT gen_random_uuid(),
 	"user_id" uuid NOT NULL,
 	"server_id" uuid NOT NULL,
 	"role" "member_role" DEFAULT 'MEMBER' NOT NULL,
 	"joined_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "members_user_id_server_id_pk" PRIMARY KEY("user_id","server_id")
+	CONSTRAINT "members_user_id_server_id_pk" PRIMARY KEY("user_id","server_id"),
+	CONSTRAINT "members_id_unique" UNIQUE("id")
 );
 --> statement-breakpoint
 CREATE TABLE "messages" (

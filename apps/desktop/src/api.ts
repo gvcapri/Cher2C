@@ -87,6 +87,13 @@ export function createServer(token: string, name: string) {
   }, token)
 }
 
+export function joinServer(token: string, code: string) {
+  return request<{ serverId: string; alreadyMember: boolean }>('/api/servers/join', {
+    method: 'POST',
+    body: JSON.stringify({ code })
+  }, token)
+}
+
 export function getServer(token: string, serverId: string) {
   return request<{
     server: { id: string; name: string }

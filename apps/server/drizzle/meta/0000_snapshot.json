@@ -1,5 +1,5 @@
 {
-  "id": "03f279df-ccd2-4b8d-b312-36ea50d769c6",
+  "id": "24e6e9a1-b0a9-44b3-82b8-8cbe5e23967c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -85,8 +85,8 @@
         "id": {
           "name": "id",
           "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
+          "primaryKey": false,
+          "notNull": false,
           "default": "gen_random_uuid()"
         },
         "user_id": {
@@ -155,7 +155,15 @@
           ]
         }
       },
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "members_id_unique": {
+          "name": "members_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

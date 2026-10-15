@@ -1,0 +1,21 @@
+# LiveKit rodando NATIVO no host (dev local no Windows).
+#
+# Por que não o Docker: no Windows, o SFU em container anuncia candidatos ICE com o
+# IP interno da rede Docker (ex.: 172.19.0.4), inalcançável pelo cliente no host.
+# Isso faz a sinalização funcionar, mas a MÍDIA (RTP) nunca fluir (PEER_CONNECTION_DISCONNECTED).
+# Rodando nativo, o SFU anuncia as interfaces reais do host e o WebRTC conecta de verdade.
+port: 7880
+bind_addresses:
+  - ""
+rtc:
+  port_range_start: 50000
+  port_range_end: 60000
+  use_external_ip: false
+  tcp_port: 7881
+keys:
+  devkey: secret_dev_cher2c_secret_key_123456
+logging:
+  level: info
+  json: false
+redis:
+  address: localhost:6379

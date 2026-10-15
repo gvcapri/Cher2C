@@ -3,6 +3,8 @@ import { ConnectionState } from 'livekit-client'
 import type { SignalingSocket } from './ws/client'
 import { createSignalingClient } from './ws/client'
 import { VoiceCallManager, type VoiceParticipant } from './media/voiceCall'
+import type { MetricsSnapshot } from './media/metrics'
+import type { QualityPresetId, ContentHint } from './media/videoConfig'
 import * as api from './api'
 
 interface AppState {
@@ -19,6 +21,7 @@ interface AppState {
   activeServerId: string | null
   loadServers: () => Promise<void>
   selectServer: (serverId: string) => Promise<void>
+  joinServer: (code: string) => Promise<void>
 
   // Voice call
   voiceChannelId: string | null
@@ -31,6 +34,24 @@ interface AppState {
   leaveVoice: () => Promise<void>
   toggleMute: () => Promise<void>
   toggleDeafen: () => Promise<void>
+
+  // Depuração (Etapa 5)
+  metrics: MetricsSnapshot | null
+  showMetrics: boolean
+  toggleShowMetrics: () => void
+
+  // Screen share (Etapa 4)
+  sharing: boolean
+  sharePreset: QualityPresetId
+  shareContentHint: ContentHint
+  shareWithSystemAudio: boolean
+  viewerQuality: 'auto' | 'low' | 'mid' | 'high'
+  startShare: (opts?: Partial<{ presetId: QualityPresetId; contentHint: ContentHint; includeSystemAudio: boolean }>) => Promise<void>
+  stopShare: () => Promise<void>
+  setSharePreset: (p: QualityPresetId) => void
+  setShareContentHint: (h: ContentHint) => void
+  setShareWithSystemAudio: (v: boolean) => void
+  setViewerQuality: (q: 'auto' | 'low' | 'mid' | 'high') => void
 
   // Internos
   signaling: SignalingSocket | null
@@ -87,6 +108,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ activeServerId: serverId, channels: detail.channels })
   },
 
+  async joinServer(code) {
+    const { token } = get()
+    if (!token) throw new Error('Não autenticado')
+    const res = await api.joinServer(token, code)
+    await get().loadServers()
+    await get().selectServer(res.serverId)
+  },
+
   voiceChannelId: null,
   connectionState: ConnectionState.Disconnected,
   participants: [],
@@ -95,6 +124,49 @@ export const useAppStore = create<AppState>((set, get) => ({
   deafened: false,
   signaling: null,
   voiceManager: null,
+  metrics: null,
+  showMetrics: false,
+
+  toggleShowMetrics() {
+    set({ showMetrics: !get().showMetrics })
+  },
+
+  sharing: false,
+  sharePreset: '1080p30',
+  shareContentHint: 'detail',
+  shareWithSystemAudio: true,
+  viewerQuality: 'auto',
+
+  async startShare(opts = {}) {
+    const { voiceManager, sharePreset, shareContentHint, shareWithSystemAudio } = get()
+    if (!voiceManager) throw new Error('Entre em um canal de voz antes de compartilhar')
+    await voiceManager.startScreenShare({
+      presetId: opts.presetId ?? sharePreset,
+      contentHint: opts.contentHint ?? shareContentHint,
+      includeSystemAudio: opts.includeSystemAudio ?? shareWithSystemAudio
+    })
+    set({ sharing: true })
+  },
+
+  async stopShare() {
+    const { voiceManager } = get()
+    await voiceManager?.stopScreenShare()
+    set({ sharing: false })
+  },
+
+  setSharePreset(p) {
+    set({ sharePreset: p })
+  },
+  setShareContentHint(h) {
+    set({ shareContentHint: h })
+  },
+  setShareWithSystemAudio(v) {
+    set({ shareWithSystemAudio: v })
+  },
+  setViewerQuality(q) {
+    get().voiceManager?.setViewerScreenQuality(q)
+    set({ viewerQuality: q })
+  },
 
   async joinVoice(channelId) {
     const { token } = get()
@@ -110,7 +182,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       onSpeakersChanged: (speaking) => set({ speaking }),
       onParticipantsChanged: (participants) => set({ participants }),
       onConnectionStateChanged: (state) => set({ connectionState: state }),
-      onError: (err) => console.error('[voice]', err)
+      onError: (err) => console.error('[voice]', err),
+      onMetricsChanged: (metrics) => set({ metrics })
     })
     await manager.connect(url, roomToken)
 
@@ -143,6 +216,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       signaling: null,
       participants: [],
       speaking: [],
+      metrics: null,
       connectionState: ConnectionState.Disconnected
     })
   },

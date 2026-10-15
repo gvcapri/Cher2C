@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import jwt from '@fastify/jwt'
 import { env } from './env'
 import { authRoutes } from './routes/auth'
 import { serverRoutes } from './routes/servers'
@@ -15,6 +16,9 @@ async function main() {
     origin: env.CORS_ORIGIN.split(','),
     credentials: true
   })
+
+  // JWT (necessário p/ request.jwtVerify() no authMiddleware)
+  await app.register(jwt, { secret: env.JWT_SECRET })
 
   // Health check
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))

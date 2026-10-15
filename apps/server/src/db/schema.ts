@@ -41,7 +41,7 @@ export const servers = pgTable('servers', {
 export const members = pgTable(
   'members',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id').defaultRandom().unique(),
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -52,7 +52,12 @@ export const members = pgTable(
     joinedAt: timestamp('joined_at', { withTimezone: true }).defaultNow().notNull()
   },
   (table) => ({
-    userServerUnique: primaryKey({ columns: [table.userId, table.serverId] })
+    // PK composta: um usuário pertence a um servidor uma única vez.
+    // (`id` é apenas identificador único — a PK real é esta.)
+    userServerUnique: primaryKey({
+      name: 'members_user_id_server_id_pk',
+      columns: [table.userId, table.serverId]
+    })
   })
 )
 

@@ -1,5 +1,9 @@
 import { useAppStore } from '../store'
 import { ConnectionState } from 'livekit-client'
+import { ScreenSharePanel } from './ScreenSharePanel'
+import { RemoteScreenShare } from './RemoteScreenShare'
+import { LocalScreenSharePreview } from './LocalScreenSharePreview'
+import { DebugMetricsPanel } from './DebugMetricsPanel'
 
 export function VoiceChannelView() {
   const voiceChannelId = useAppStore((s) => s.voiceChannelId)
@@ -32,7 +36,9 @@ export function VoiceChannelView() {
         )}
       </div>
 
-      <div style={{ flex: 1, padding: 16 }}>
+      <div style={{ flex: 1, padding: 16, overflowY: 'auto' }}>
+        <LocalScreenSharePreview />
+        <RemoteScreenShare />
         <h4>Participantes ({participants.length})</h4>
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {participants.map((p) => {
@@ -71,6 +77,12 @@ export function VoiceChannelView() {
           })}
         </ul>
       </div>
+
+      {/* Compartilhamento de tela */}
+      <ScreenSharePanel />
+
+      {/* Métricas de depuração (Etapa 5) */}
+      <DebugMetricsPanel />
 
       {/* Barra de controles */}
       <div

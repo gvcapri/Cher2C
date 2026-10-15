@@ -67,6 +67,58 @@ export async function serverRoutes(app: FastifyInstance) {
     return reply.status(201).send({ server })
   })
 
+  // Convite: por simplicidade no MVP, o "código" é o próprio ID do servidor.
+  // (Um código aleatório curto exigiria um cache/tabela de convites.)
+  app.get('/:serverId/invite', async (request, reply) => {
+    const payload = request.user as { sub: string }
+    const { serverId } = request.params as { serverId: string }
+
+    const [membership] = await db
+      .select()
+      .from(members)
+      .where(and(eq(members.userId, payload.sub), eq(members.serverId, serverId)))
+      .limit(1)
+    if (!membership) {
+      return reply.status(403).send({ error: 'Você não é membro deste servidor' })
+    }
+
+    return reply.send({ code: serverId })
+  })
+
+  // Entrar no servidor via código de convite (= serverId no MVP)
+  app.post('/join', async (request, reply) => {
+    const payload = request.user as { sub: string }
+    const parsed = z.object({ code: z.string().min(1) }).safeParse(request.body)
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Código de convite ausente' })
+    }
+
+    const [server] = await db
+      .select()
+      .from(servers)
+      .where(eq(servers.id, parsed.data.code))
+      .limit(1)
+    if (!server) {
+      return reply.status(404).send({ error: 'Convite inválido ou expirado' })
+    }
+
+    const [existing] = await db
+      .select()
+      .from(members)
+      .where(and(eq(members.userId, payload.sub), eq(members.serverId, server.id)))
+      .limit(1)
+    if (existing) {
+      return reply.send({ serverId: server.id, alreadyMember: true })
+    }
+
+    await db.insert(members).values({
+      userId: payload.sub,
+      serverId: server.id,
+      role: 'MEMBER'
+    })
+    return reply.status(201).send({ serverId: server.id, alreadyMember: false })
+  })
+
   // Detalhes do servidor (incluindo canais)
   app.get('/:serverId', async (request, reply) => {
     const payload = request.user as { sub: string }

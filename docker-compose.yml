@@ -9,7 +9,8 @@ services:
       POSTGRES_PASSWORD: cher2c_dev_password
       POSTGRES_DB: cher2c
     ports:
-      - "5432:5432"
+      # Parametrizado p/ evitar conflito com um Postgres local do sistema
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
