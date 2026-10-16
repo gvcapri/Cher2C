@@ -65,13 +65,13 @@ export function ShareModal() {
     >
       <div>
         <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginBottom: 8 }}>
-          Escolha a janela/tela na próxima etapa (seletor do sistema).
+          A captura da tela começa automaticamente na próxima etapa.
         </p>
         <div className={styles.optionGrid}>
           <div className={cx(styles.optionCard, styles.optionCardSelected)}>
             <Monitor size={18} className={styles.optionIcon} />
             <span className={styles.optionTitle}>Tela ou janela</span>
-            <span className={styles.optionDesc}>Seletor exibido pelo sistema</span>
+            <span className={styles.optionDesc}>Captura automática</span>
           </div>
           <div className={cx(styles.optionCard, styles.optionCardSelected)}>
             <AppWindow size={18} className={styles.optionIcon} />

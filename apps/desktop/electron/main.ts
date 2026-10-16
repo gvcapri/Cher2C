@@ -31,13 +31,21 @@ app.whenReady().then(() => {
   // No Electron essa API NÃO existe até o main configurar um handler de
   // captura de tela; sem isso o screen share falha com "getDisplayMedia not supported".
   // (Electron 31: apenas o handler, sem useSystemPicker — adicionado no v32+.)
-  // Devolve a primeira tela/janela disponível como fallback.
-  session.defaultSession.setDisplayMediaRequestHandler((_request, callback) => {
+  // Devolve a primeira tela/janela disponível como fallback; quando o renderer
+  // pede áudio (toggle "áudio do sistema"), devolve o dispositivo loopback (Windows),
+  // senão a track de áudio da tela nunca chega.
+  session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
     desktopCapturer
       .getSources({ types: ['screen', 'window'] })
       .then((sources) => {
-        if (sources.length > 0) callback({ video: sources[0] })
-        else callback({}) // cancela se não houver fonte
+        if (sources.length > 0) {
+          callback({
+            video: sources[0],
+            ...(request.audioRequested ? { audio: 'loopback' as const } : {})
+          })
+        } else {
+          callback({}) // cancela se não houver fonte
+        }
       })
       .catch(() => callback({}))
   })

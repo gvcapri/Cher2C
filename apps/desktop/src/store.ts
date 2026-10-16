@@ -286,13 +286,31 @@ export const useAppStore = create<AppState>((set, get) => ({
   viewerQuality: 'auto',
 
   async startShare(opts = {}) {
-    const { voiceManager, sharePreset, shareContentHint, shareWithSystemAudio } = get()
+    const { voiceManager, connectionState, sharePreset, shareContentHint, shareWithSystemAudio } = get()
     if (!voiceManager) throw new Error('Entre em um canal de voz antes de compartilhar')
-    await voiceManager.startScreenShare({
+    // Guarda: sem mídia conectada, publicar a tela só trava/falha depois com
+    // erro críptico do LiveKit — falamos claro e rápido.
+    if (connectionState !== ConnectionState.Connected) {
+      throw new Error(
+        'Conexão de mídia não estabelecida — verifique o servidor LiveKit e entre no canal novamente.'
+      )
+    }
+    const start = voiceManager.startScreenShare({
       presetId: opts.presetId ?? sharePreset,
       contentHint: opts.contentHint ?? shareContentHint,
       includeSystemAudio: opts.includeSystemAudio ?? shareWithSystemAudio
     })
+    // Timeout: se o SFU não responder, o modal não fica pendurado p/ sempre
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(
+        () =>
+          reject(
+            new Error('Tempo esgotado ao iniciar o compartilhamento (o LiveKit não respondeu).')
+          ),
+        30_000
+      )
+    })
+    await Promise.race([start, timeout])
     set({ sharing: true })
   },
 

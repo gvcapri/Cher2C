@@ -154,7 +154,14 @@ export function ChannelSidebar() {
                 <div key={ch.id}>
                   <button
                     className={cx('channelItem', inThis && 'active')}
-                    onClick={() => void joinVoice(ch.id)}
+                    onClick={() => {
+                      void joinVoice(ch.id).catch((e) =>
+                        toast.show(
+                          e instanceof Error ? e.message : 'Falha ao entrar no canal de voz',
+                          'error'
+                        )
+                      )
+                    }}
                   >
                     <Volume2 size={18} className="channelIcon" />
                     <span className="channelName">{ch.name}</span>
