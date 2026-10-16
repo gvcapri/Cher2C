@@ -72,6 +72,11 @@
   padding-bottom: 1px;
 }
 
+/* Mensagem própria: leve destaque na cor do conteúdo */
+.own .content {
+  color: var(--text-primary);
+}
+
 .avatarCell {
   width: 40px;
   flex-shrink: 0;
