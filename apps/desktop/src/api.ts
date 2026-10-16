@@ -37,6 +37,23 @@ export interface VoiceTokenResponse {
   channelId: string
 }
 
+export interface MessageOut {
+  id: string
+  content: string
+  createdAt: string
+  userId: string
+  username: string
+}
+
+export interface MemberOut {
+  id: string
+  userId: string
+  username: string
+  avatarUrl: string | null
+  role: string
+  joinedAt: string
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -87,6 +104,18 @@ export function createServer(token: string, name: string) {
   }, token)
 }
 
+export function createChannel(
+  token: string,
+  serverId: string,
+  name: string,
+  type: 'TEXT' | 'VOICE'
+) {
+  return request<{ channel: ChannelSummary }>('/api/channels', {
+    method: 'POST',
+    body: JSON.stringify({ serverId, name, type })
+  }, token)
+}
+
 export function joinServer(token: string, code: string) {
   return request<{ serverId: string; alreadyMember: boolean }>('/api/servers/join', {
     method: 'POST',
@@ -98,9 +127,13 @@ export function getServer(token: string, serverId: string) {
   return request<{
     server: { id: string; name: string }
     channels: ChannelSummary[]
-    members: unknown[]
+    members: MemberOut[]
     myRole: string
   }>(`/api/servers/${serverId}`, {}, token)
+}
+
+export function getMessages(token: string, channelId: string) {
+  return request<{ messages: MessageOut[] }>(`/api/channels/${channelId}/messages`, {}, token)
 }
 
 // ---- Channels ----

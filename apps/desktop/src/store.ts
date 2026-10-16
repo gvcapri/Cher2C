@@ -7,6 +7,21 @@ import type { MetricsSnapshot } from './media/metrics'
 import type { QualityPresetId, ContentHint } from './media/videoConfig'
 import * as api from './api'
 
+/** Tema: escuro (padrão), claro ou conforme o sistema. */
+export type ThemeMode = 'dark' | 'light' | 'system'
+
+/** Mensagem de chat formatada p/ a UI. */
+export interface ChatMessage {
+  id: string
+  channelId: string
+  userId: string
+  username: string
+  content: string
+  createdAt: string
+  /** true quando enviada por mim (para alinhar à direita) */
+  own?: boolean
+}
+
 interface AppState {
   // Auth
   token: string | null
@@ -22,6 +37,8 @@ interface AppState {
   loadServers: () => Promise<void>
   selectServer: (serverId: string) => Promise<void>
   joinServer: (code: string) => Promise<void>
+  /** Cria um servidor e já o seleciona */
+  createServer: (name: string) => Promise<void>
 
   // Voice call
   voiceChannelId: string | null
@@ -39,6 +56,34 @@ interface AppState {
   metrics: MetricsSnapshot | null
   showMetrics: boolean
   toggleShowMetrics: () => void
+
+  // UI (reforma visual)
+  theme: ThemeMode
+  setTheme: (t: ThemeMode) => void
+  /** Canal de texto selecionado (para o chat) */
+  activeTextChannelId: string | null
+  selectTextChannel: (channelId: string) => Promise<void>
+  /** Mensagens por channelId */
+  messages: Record<string, ChatMessage[]>
+  messagesLoading: boolean
+  loadMessages: (channelId: string) => Promise<void>
+  sendMessage: (channelId: string, content: string) => void
+  /** Membros do servidor ativo (p/ lista de membros) */
+  members: api.MemberOut[]
+  /** Modal de servidor (criar/entrar) */
+  serverModalOpen: boolean
+  setServerModalOpen: (open: boolean) => void
+  /** Modal de configurações de áudio */
+  audioSettingsOpen: boolean
+  setAudioSettingsOpen: (open: boolean) => void
+  /** Modal de seleção de compartilhamento */
+  shareModalOpen: boolean
+  setShareModalOpen: (open: boolean) => void
+  /** Lista de membros visível */
+  membersVisible: boolean
+  toggleMembers: () => void
+  /** Criar canal */
+  createChannel: (name: string, type: 'TEXT' | 'VOICE') => Promise<void>
 
   // Screen share (Etapa 4)
   sharing: boolean
@@ -105,7 +150,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { token } = get()
     if (!token) return
     const detail = await api.getServer(token, serverId)
-    set({ activeServerId: serverId, channels: detail.channels })
+    set({ activeServerId: serverId, channels: detail.channels, members: detail.members })
+    // auto-seleciona o primeiro canal de texto p/ o chat
+    const firstText = detail.channels.find((c) => c.type === 'TEXT')
+    if (firstText) {
+      set({ activeTextChannelId: firstText.id })
+      void get().loadMessages(firstText.id)
+    } else {
+      set({ activeTextChannelId: null })
+    }
   },
 
   async joinServer(code) {
@@ -114,6 +167,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     const res = await api.joinServer(token, code)
     await get().loadServers()
     await get().selectServer(res.serverId)
+  },
+
+  async createServer(name) {
+    const { token } = get()
+    if (!token) throw new Error('Não autenticado')
+    const res = await api.createServer(token, name)
+    await get().loadServers()
+    await get().selectServer(res.server.id)
   },
 
   voiceChannelId: null,
@@ -129,6 +190,93 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   toggleShowMetrics() {
     set({ showMetrics: !get().showMetrics })
+  },
+
+  // ---- UI (reforma visual) ----
+  theme: 'dark',
+  setTheme(t) {
+    set({ theme: t })
+    applyTheme(t)
+  },
+
+  activeTextChannelId: null,
+  async selectTextChannel(channelId) {
+    set({ activeTextChannelId: channelId })
+    await get().loadMessages(channelId)
+  },
+
+  messages: {},
+  messagesLoading: false,
+  async loadMessages(channelId) {
+    const { token, messages } = get()
+    if (!token) return
+    // já temos em cache?
+    if (messages[channelId]) return
+    set({ messagesLoading: true })
+    try {
+      const res = await api.getMessages(token, channelId)
+      const { user } = get()
+      const mapped: ChatMessage[] = res.messages.map((m) => ({
+        id: m.id,
+        channelId,
+        userId: m.userId,
+        username: m.username,
+        content: m.content,
+        createdAt: m.createdAt,
+        own: m.userId === user?.id
+      }))
+      set({ messages: { ...get().messages, [channelId]: mapped } })
+    } catch {
+      // histórico vazio p/ MVP — não bloqueia o chat (socket entrega ao vivo)
+      set({ messages: { ...get().messages, [channelId]: [] } })
+    } finally {
+      set({ messagesLoading: false })
+    }
+  },
+
+  sendMessage(channelId, content) {
+    const { signaling, user } = get()
+    if (!content.trim() || !signaling) return
+    signaling.emit('chat:send', { channelId, content: content.trim() })
+    // eco local (o server só broadcast p/ os outros)
+    const mine: ChatMessage = {
+      id: `local-${Date.now()}`,
+      channelId,
+      userId: user?.id ?? 'me',
+      username: user?.username ?? 'eu',
+      content: content.trim(),
+      createdAt: new Date().toISOString(),
+      own: true
+    }
+    const cur = get().messages[channelId] ?? []
+    set({ messages: { ...get().messages, [channelId]: [...cur, mine] } })
+  },
+
+  members: [],
+
+  serverModalOpen: false,
+  setServerModalOpen(open) {
+    set({ serverModalOpen: open })
+  },
+  audioSettingsOpen: false,
+  setAudioSettingsOpen(open) {
+    set({ audioSettingsOpen: open })
+  },
+  shareModalOpen: false,
+  setShareModalOpen(open) {
+    set({ shareModalOpen: open })
+  },
+
+  membersVisible: true,
+  toggleMembers() {
+    set({ membersVisible: !get().membersVisible })
+  },
+
+  async createChannel(name, type) {
+    const { token, activeServerId } = get()
+    if (!token || !activeServerId) throw new Error('Selecione um servidor')
+    await api.createChannel(token, activeServerId, name, type)
+    await get().selectServer(activeServerId)
   },
 
   sharing: false,
@@ -192,6 +340,23 @@ export const useAppStore = create<AppState>((set, get) => ({
     socket.on('voice:state', () => {
       // estados de mute/etc. dos outros — UI pode reagir no futuro
     })
+
+    // Mensagens de chat ao vivo (broadcast do server p/ os outros na sala)
+    socket.on('chat:message', (data) => {
+      const { messages, user } = get()
+      const cur = messages[data.channelId] ?? []
+      const incoming: ChatMessage = {
+        id: `${data.userId}-${new Date(data.createdAt).getTime()}`,
+        channelId: data.channelId,
+        userId: data.userId,
+        username: '', // resolvido no ChatArea via members/usernames
+        content: data.content,
+        createdAt: new Date(data.createdAt).toISOString(),
+        own: data.userId === user?.id
+      }
+      set({ messages: { ...messages, [data.channelId]: [...cur, incoming] } })
+    })
+
     socket.emit('voice:join', { channelId })
 
     set({
@@ -237,3 +402,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ deafened: next, muted: next ? true : get().muted })
   }
 }))
+
+/** Aplica o tema ao <html data-theme>, resolvendo "system". */
+function applyTheme(mode: ThemeMode): void {
+  const root = document.documentElement
+  if (mode === 'system') {
+    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches
+    root.setAttribute('data-theme', prefersLight ? 'light' : 'dark')
+  } else {
+    root.setAttribute('data-theme', mode)
+  }
+}
