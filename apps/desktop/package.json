@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@cher2c/shared": "*",
+    "@fontsource/inter": "^5.3.0",
     "clsx": "^2.1.1",
     "livekit-client": "^2.4.0",
     "lucide-react": "^1.57.0",
