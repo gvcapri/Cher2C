@@ -21,7 +21,8 @@ function createWindow() {
     win.loadURL(process.env.VITE_DEV_SERVER_URL!)
     win.webContents.openDevTools({ mode: 'detach' })
   } else {
-    win.loadFile(path.join(__dirname, '../renderer/index.html'))
+    // __dirname = dist-electron → HTML gerado pelo vite em dist/renderer
+    win.loadFile(path.join(__dirname, '../dist/renderer/index.html'))
   }
 }
 

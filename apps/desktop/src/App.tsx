@@ -1,14 +1,56 @@
 import { useEffect, useState } from 'react'
+import { Wifi, WifiOff } from 'lucide-react'
 import { useAppStore } from './store'
-import { AuthPanel } from './components/AuthPanel'
-import { ChannelSidebar } from './components/ChannelSidebar'
-import { VoiceChannelView } from './components/VoiceChannelView'
+import { AuthScreen } from './components/auth/AuthScreen'
+import { AppShell } from './components/layout/AppShell'
+import { ServerModal } from './components/layout/ServerModal'
+import { DebugMetricsPanel } from './components/DebugMetricsPanel'
+import { ToastProvider } from './components/ui'
+import { useKeyboardShortcuts } from './lib/useKeyboardShortcuts'
 import { checkHealth } from './api'
+import './styles/global.css'
 
+/**
+ * Raiz do app:
+ *  - sem token: tela de autenticação (AuthScreen) com indicador de saúde do backend
+ *  - logado: shell estilo Discord (rail + sidebar + chat/chamada + membros)
+ *  - globais: toasts, modal de servidor, drawer de métricas e atalhos de teclado
+ */
 export default function App() {
   const token = useAppStore((s) => s.token)
-  const user = useAppStore((s) => s.user)
-  const logout = useAppStore((s) => s.logout)
+  const theme = useAppStore((s) => s.theme)
+  const setTheme = useAppStore((s) => s.setTheme)
+
+  useKeyboardShortcuts()
+
+  // Aplica o tema (resolve "system") e reage a trocas do sistema
+  useEffect(() => {
+    setTheme(theme)
+    if (theme !== 'system') return
+    const mq = window.matchMedia('(prefers-color-scheme: light)')
+    const onChange = () => setTheme('system')
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [theme, setTheme])
+
+  return (
+    <ToastProvider>
+      {token ? (
+        <AppShell />
+      ) : (
+        <>
+          <AuthScreen />
+          <HealthPill />
+        </>
+      )}
+      <ServerModal />
+      <DebugMetricsPanel />
+    </ToastProvider>
+  )
+}
+
+/** Indicador discreto de saúde do backend (canto inferior direito do login). */
+function HealthPill() {
   const [health, setHealth] = useState('...')
 
   useEffect(() => {
@@ -17,38 +59,24 @@ export default function App() {
       .catch(() => setHealth('offline'))
   }, [])
 
-  if (!token) {
-    return (
-      <>
-        <AuthPanel />
-        <p style={{ textAlign: 'center', color: '#888', fontFamily: 'system-ui' }}>
-          backend: {health}
-        </p>
-      </>
-    )
-  }
+  const online = health === 'ok' || health === 'healthy'
 
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'system-ui', background: '#313338', color: '#dbdee1' }}>
-      <ChannelSidebar />
-      <VoiceChannelView />
-      <div
-        style={{
-          position: 'fixed',
-          top: 8,
-          right: 12,
-          display: 'flex',
-          gap: 12,
-          alignItems: 'center',
-          fontSize: 12,
-          color: '#80848e'
-        }}
-      >
-        <span>{user?.username}</span>
-        <button onClick={logout} style={{ cursor: 'pointer' }}>
-          Sair
-        </button>
-      </div>
+    <div
+      style={{
+        position: 'fixed',
+        bottom: 12,
+        right: 16,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        fontSize: 12,
+        color: 'var(--text-faint)'
+      }}
+      role="status"
+    >
+      {online ? <Wifi size={13} /> : <WifiOff size={13} />}
+      backend: {health}
     </div>
   )
 }
