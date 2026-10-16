@@ -1,0 +1,4 @@
+.spinner {
+  animation: spin 0.7s linear infinite;
+  color: var(--text-secondary);
+}

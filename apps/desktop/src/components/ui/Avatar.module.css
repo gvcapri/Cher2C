@@ -1,0 +1,53 @@
+.wrap {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.img,
+.initials {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: var(--weight-semibold);
+  user-select: none;
+}
+
+/* Anel verde pulsante quando falando */
+.speaking {
+  animation: pulseRing 1.4s ease-out infinite;
+}
+
+.speaking::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid var(--speaking-ring);
+}
+
+.status {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  border-radius: 50%;
+  border: 2.5px solid var(--bg-sidebar);
+}
+
+.status_online {
+  background: var(--success);
+}
+.status_idle {
+  background: var(--warning);
+}
+.status_dnd {
+  background: var(--danger);
+}
+.status_offline {
+  background: var(--text-faint);
+}

@@ -1,0 +1,64 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.tip {
+  position: absolute;
+  background: var(--bg-tooltip);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  padding: 5px 9px;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.95);
+  transition:
+    opacity var(--duration-fast) var(--ease),
+    transform var(--duration-fast) var(--ease);
+  z-index: var(--z-tooltip);
+  box-shadow: var(--shadow-md);
+}
+
+.wrap:hover .tip {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.top {
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+}
+.wrap:hover .top {
+  transform: translateX(-50%) scale(1);
+}
+
+.bottom {
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+}
+.wrap:hover .bottom {
+  transform: translateX(-50%) scale(1);
+}
+
+.left {
+  right: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.95);
+}
+.wrap:hover .left {
+  transform: translateY(-50%) scale(1);
+}
+
+.right {
+  left: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.95);
+}
+.wrap:hover .right {
+  transform: translateY(-50%) scale(1);
+}

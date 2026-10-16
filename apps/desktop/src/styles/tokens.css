@@ -1,0 +1,209 @@
+/*
+ * Design tokens — Cher2C
+ * Tema escuro como padrão (ref: Discord/Linear). Tema claro opcional via
+ * [data-theme] ou prefers-color-scheme. Contraste AA nos textos principais.
+ */
+
+:root {
+  /* ---- Espaçamento (escala 4) ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* ---- Raios ---- */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+
+  /* ---- Tipografia ---- */
+  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', ui-monospace, monospace;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* ---- Z-index ---- */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 100;
+  --z-drawer: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+  --z-tooltip: 500;
+
+  /* ---- Duração de animação ---- */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 250ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ---- Larguras de layout ---- */
+  --rail-width: 72px;
+  --sidebar-width: 240px;
+  --members-width: 240px;
+  --titlebar-height: 0px; /* barra de título nativa (sem frameless) */
+}
+
+/* ================= TEMA ESCURO (padrão) ================= */
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Superfícies (4 níveis) */
+  --bg-base: #1e1f22; /* fundo do app / palco */
+  --bg-rail: #1e1f22; /* barra de servidores */
+  --bg-sidebar: #2b2d31; /* sidebar de canais */
+  --bg-panel: #2b2d31; /* painéis / cards */
+  --bg-elevated: #313338; /* modais, menus, hover elevado */
+  --bg-input: #1e1f22; /* campos de entrada */
+  --bg-hover: rgba(78, 80, 88, 0.3);
+  --bg-active: rgba(78, 80, 88, 0.6);
+  --bg-selected: rgba(88, 101, 242, 0.16);
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+  --bg-tooltip: #111214;
+
+  /* Borda */
+  --border: #3f4147;
+  --border-subtle: #2e3035;
+  --border-strong: #4e5058;
+
+  /* Accent (blurple) */
+  --accent: #5865f2;
+  --accent-hover: #4752c4;
+  --accent-active: #3c45a5;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(88, 101, 242, 0.16);
+
+  /* Status */
+  --success: #23a55a;
+  --success-soft: rgba(35, 165, 90, 0.16);
+  --danger: #f23f43;
+  --danger-hover: #da373c;
+  --danger-soft: rgba(242, 63, 67, 0.16);
+  --warning: #f0b232;
+  --warning-soft: rgba(240, 178, 50, 0.16);
+  --info: #00a8fc;
+  --info-soft: rgba(0, 168, 252, 0.16);
+
+  /* Texto (contraste AA sobre superfícies) */
+  --text-primary: #f2f3f5;
+  --text-secondary: #b5bac1;
+  --text-muted: #949ba4;
+  --text-faint: #80848e;
+  --text-link: #00a8fc;
+  --text-on-accent: #ffffff;
+
+  /* Sombra */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --shadow-focus: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--accent);
+
+  /* Indicadores */
+  --speaking-ring: #23a55a;
+  --scrollbar-thumb: #1a1b1e;
+  --scrollbar-thumb-hover: #26272b;
+}
+
+/* ================= TEMA CLARO ================= */
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg-base: #ffffff;
+  --bg-rail: #e3e5e8;
+  --bg-sidebar: #f2f3f5;
+  --bg-panel: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-input: #ebedef;
+  --bg-hover: rgba(6, 6, 7, 0.06);
+  --bg-active: rgba(6, 6, 7, 0.1);
+  --bg-selected: rgba(88, 101, 242, 0.12);
+  --bg-overlay: rgba(0, 0, 0, 0.4);
+  --bg-tooltip: #111214;
+
+  --border: #d7d9dc;
+  --border-subtle: #e3e5e8;
+  --border-strong: #c4c9ce;
+
+  --accent: #5865f2;
+  --accent-hover: #4752c4;
+  --accent-active: #3c45a5;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(88, 101, 242, 0.12);
+
+  --success: #23a55a;
+  --success-soft: rgba(35, 165, 90, 0.12);
+  --danger: #da373c;
+  --danger-hover: #c12226;
+  --danger-soft: rgba(218, 55, 60, 0.12);
+  --warning: #d87f0a;
+  --warning-soft: rgba(216, 127, 10, 0.12);
+  --info: #0067e0;
+  --info-soft: rgba(0, 103, 224, 0.12);
+
+  --text-primary: #060607;
+  --text-secondary: #4e5058;
+  --text-muted: #5c5e66;
+  --text-faint: #80848e;
+  --text-link: #0067e0;
+  --text-on-accent: #ffffff;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.18);
+  --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px var(--accent);
+
+  --speaking-ring: #23a55a;
+  --scrollbar-thumb: #c4c9ce;
+  --scrollbar-thumb-hover: #aeb2b8;
+}
+
+/* Preferência do sistema quando não há escolha manual */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --bg-base: #ffffff;
+    --bg-rail: #e3e5e8;
+    --bg-sidebar: #f2f3f5;
+    --bg-panel: #ffffff;
+    --bg-elevated: #ffffff;
+    --bg-input: #ebedef;
+    --bg-hover: rgba(6, 6, 7, 0.06);
+    --bg-active: rgba(6, 6, 7, 0.1);
+    --bg-selected: rgba(88, 101, 242, 0.12);
+    --bg-overlay: rgba(0, 0, 0, 0.4);
+    --border: #d7d9dc;
+    --border-subtle: #e3e5e8;
+    --border-strong: #c4c9ce;
+    --accent-soft: rgba(88, 101, 242, 0.12);
+    --text-primary: #060607;
+    --text-secondary: #4e5058;
+    --text-muted: #5c5e66;
+    --text-faint: #80848e;
+    --text-link: #0067e0;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.18);
+    --shadow-focus: 0 0 0 2px #ffffff, 0 0 0 4px var(--accent);
+    --scrollbar-thumb: #c4c9ce;
+    --scrollbar-thumb-hover: #aeb2b8;
+  }
+}

@@ -1,0 +1,11 @@
+.skeleton {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    var(--bg-active) 0px,
+    var(--bg-hover) 60px,
+    var(--bg-active) 120px
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease infinite;
+}
