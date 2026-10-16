@@ -10,7 +10,21 @@ App de comunicação estilo Discord — **foco em chamadas de voz + compartilham
 - ✅ **Etapa 2** — Estrutura do repositório + backend (auth, canais, sinalização, tokens SFU)
 - ✅ **Etapa 3** — Cliente com chamada de voz + configuração de áudio
 - ✅ **Etapa 4** — Compartilhamento de tela com áudio, simulcast, degradação adaptativa
-- ✅ **Etapa 5** — Métricas de depuração, testes de rede degradada ← atual
+- ✅ **Etapa 5** — Métricas de depuração, testes de rede degradada
+- ✅ **Reforma visual/UX** — Design system, shell estilo Discord, chamada, chat, auth ← atual
+
+## Interface (reforma visual e UX)
+
+Reformulação completa de apresentação **sem alterar lógica de mídia, API ou eventos de Socket.IO** (CSS Modules + CSS variables; sem UI kits; `lucide-react` e `clsx` apenas):
+
+- **Design system** (`src/styles/` + `src/components/ui/`): tokens de tema (escuro padrão, claro opcional via `prefers-color-scheme` ou manual), 4 níveis de superfície, escala tipográfica/espaciamento, sombras e z-index; componentes base `Button`, `IconButton`, `Input`, `Avatar` (iniciais + presença), `Badge`, `Tooltip`, `Modal`, `Menu`, `Toast`, `Skeleton`, `Spinner`, `Switch`, `Slider`.
+- **Shell estilo Discord** (`components/layout/`): rail de servidores com pílula de seleção e tooltips, sidebar de canais (categorias recolhíveis, ícones `#`/alto-falante, participantes sob o canal de voz com anel de fala), painel do usuário no rodapé (mute/deafen/config/tema), lista de membros recolhível, modal de servidor com abas **Criar** / **Entrar com código** e estado vazio de primeiro acesso.
+- **Chamada** (`components/call/`): grade responsiva de participantes, modo de apresentação quando há tela compartilhada (16:9 + faixa lateral), barra de controles flutuante com atalhos nos tooltips, seletor de compartilhamento em cards (presets, conteúdo, áudio do sistema), configurações de áudio (dispositivos, volume, teste com medidor), indicador de qualidade da conexão (`good`/`limited`/`poor`) e banner "Reconectando…".
+- **Chat** (`components/chat/`): mensagens agrupadas por autor, separadores de data, Enter/Shift+Enter, auto-scroll inteligente com botão "Novas mensagens", skeleton e estado vazio.
+- **Auth** (`components/auth/`): login/registro em card com gradiente, validação inline, senha com mostrar/ocultar, loading e erros amigáveis.
+- **Métricas** (`DebugMetricsPanel`): reapresentado como **drawer** com badges de saúde, sparklines SVG (bitrate/perda/RTT) e medidores por participante.
+- **Atalhos**: `Ctrl+Shift+M` mutar · `Ctrl+Shift+E` ensurdecer · `Ctrl+Shift+S` compartilhar · `Ctrl+Shift+D` métricas · `Ctrl+Shift+↑/↓` trocar de canal de texto.
+- **Polimento**: micro-animações 120–250 ms respeitando `prefers-reduced-motion`, scrollbars e foco estilizados, ARIA nos controles e feedback de loading/vazio/erro/reconexão.
 
 ## Stack
 
@@ -136,7 +150,7 @@ A escolha do encoder de hardware é feita **automaticamente pelo stack WebRTC do
 
 - **Coletor puro** (`media/metrics.ts`, testado): lê RTCStats de todas as tracks (enviadas e recebidas) e calcula por diferença entre amostras: **bitrate, perda de pacotes, jitter, RTT, fps, resolução, nível de áudio** e limitação do encoder (`cpu`/`bandwidth`).
 - **Saúde da rede**: classificada em `good`/`limited`/`poor` por limiares de perda (≤1%/≤5%), RTT (≤100/≤250 ms) e jitter (≤30/≤100 ms).
-- **UI** (`DebugMetricsPanel`): painel de depuração com resumo da conexão (RTT, perda, jitter, banda de saída da BWE), tabela por track e medidor de áudio por participante.
+- **UI** (`DebugMetricsPanel`): drawer deslizante (atalho `Ctrl+Shift+D` ou botão no topo da chamada) com resumo da conexão (RTT, perda, jitter, banda de saída da BWE), sparklines SVG, tabela por track e medidor de áudio por participante.
 - **Testes de rede degradada** (`media/degradedNetwork.test.ts`): cenário 5% perda + 200 ms RTT é detectado como `limited`; a política de banda mantém o áudio integral e o vídeo cai primeiro (até zerar) em qualquer nível de degradação testado.
 - Coleta a cada 1 s via `getRTCStatsReport()` (sender/receiver), pausada fora de `Connected`.
 
