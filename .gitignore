@@ -45,3 +45,6 @@ postgres-data/
 # Temp
 .tmp/
 .temp/
+
+# LiveKit SFU nativo (binário baixado por scripts/livekit-dev.mjs)
+tools/livekit/

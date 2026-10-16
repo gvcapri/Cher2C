@@ -34,7 +34,12 @@ services:
 
   # LiveKit SFU (self-hosted)
   livekit:
-    image: livekit/livekit-server:v1.8.0
+    # PERFIL OPCIONAL (Linux/CI): no Windows o SFU em container não funciona — o
+    # cliente no host não alcança os candidatos ICE anunciados com o IP interno do
+    # Docker (mídia nunca conecta). No Windows use o SFU nativo: `npm run dev:sfu`.
+    # Ative este perfil com: docker compose --profile docker-sfu up -d
+    profiles: ["docker-sfu"]
+    image: livekit/livekit-server:v1.13.10
     command: ["--config", "/etc/livekit.yaml", "--dev"]
     ports:
       - "7880:7880"   # WebSocket/SFU

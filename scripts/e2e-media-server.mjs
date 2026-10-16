@@ -28,6 +28,44 @@ window.__log = []
 window.__done = false
 window.__result = null
 const say = (m) => { window.__log.push(m); console.log(m) }
+// Diagnostico dos PeerConnections (estado ICE + pares de candidatos escolhidos)
+async function diag() {
+  const out = { state: window.__room && window.__room.state, log: window.__log.slice(-20), details: [] }
+  const pcs = []
+  const seen = new Set()
+  const walk = (o, d) => {
+    if (!o || d > 5 || typeof o !== 'object' || seen.has(o)) return
+    seen.add(o)
+    try {
+      if (o instanceof RTCPeerConnection) { pcs.push(o); return }
+      if (o._pc && o._pc instanceof RTCPeerConnection) { pcs.push(o._pc); return }
+      for (const k of Object.keys(o)) { try { walk(o[k], d + 1) } catch {} }
+    } catch {}
+  }
+  walk(window.__room, 0)
+  for (const pc of pcs) {
+    const d = { ice: pc.iceConnectionState, conn: pc.connectionState, gath: pc.iceGatheringState, pairs: [] }
+    try {
+      const stats = await pc.getStats()
+      const cands = new Map()
+      stats.forEach((s) => { if (s.type === 'local-candidate' || s.type === 'remote-candidate') cands.set(s.id, s) })
+      stats.forEach((s) => {
+        if (s.type === 'candidate-pair' && (s.nominated || ['succeeded', 'checking', 'failed', 'in-progress'].includes(s.state))) {
+          const l = cands.get(s.localCandidateId)
+          const r = cands.get(s.remoteCandidateId)
+          d.pairs.push({
+            state: s.state, nominated: !!s.nominated,
+            bytes: (s.bytesSent || 0) + '>' + (s.bytesReceived || 0),
+            local: l && (l.protocol + ' ' + (l.address || l.ip) + ':' + l.port + ' ' + l.candidateType),
+            remote: r && (r.protocol + ' ' + (r.address || r.ip) + ':' + r.port + ' ' + r.candidateType)
+          })
+        }
+      })
+    } catch (e) { d.statsErr = String(e && e.message || e) }
+    out.details.push(d)
+  }
+  return out
+}
 async function run() {
   try {
     const { Room, RoomEvent, ConnectionState } = window.LivekitClient
@@ -44,6 +82,12 @@ async function run() {
     })
     room.on(RoomEvent.Connected, () => say('Connected'))
     room.on(RoomEvent.ActiveSpeakersChanged, (sp) => say('Speakers=' + sp.map(p=>p.identity).join(',')))
+    // Diagnóstico: erros do LiveKit (ICE/negociação) e mudanças de estado
+    room.on(RoomEvent.Error, (e) => say('ROOM_ERROR ' + (e && e.message || e)))
+    room.on(RoomEvent.Reconnecting, () => say('Reconnecting'))
+    room.on(RoomEvent.Disconnected, (reason) => say('Disconnected reason=' + reason))
+    window.addEventListener('error', (e) => say('PAGE_ERROR ' + e.message))
+    window.addEventListener('unhandledrejection', (e) => say('PAGE_REJECTION ' + (e.reason && e.reason.message || e.reason)))
 
     await room.connect(${JSON.stringify(wsUrl)}, ${JSON.stringify(token)})
     say('connect resolved, state=' + room.state)
@@ -105,11 +149,12 @@ async function run() {
     }
     window.__result = { who: window.__who, ok: false, state: room.state,
       others: room.remoteParticipants.size, remoteAudio: remoteAudio.length,
-      localPublished: room.localParticipant.audioTrackPublications.size }
+      localPublished: room.localParticipant.audioTrackPublications.size,
+      diag: await diag() }
     window.__done = true
     say('RESULT ' + JSON.stringify(window.__result))
   } catch (e) {
-    window.__result = { who: window.__who, ok: false, error: String(e && e.message || e) }
+    window.__result = { who: window.__who, ok: false, error: String(e && e.message || e), diag: await diag() }
     window.__done = true
     say('ERROR ' + String(e && e.message || e))
   }

@@ -69,8 +69,8 @@ npm install
 docker compose up -d postgres redis
 
 # LiveKit SFU nativo no host (necessário p/ WebRTC no Windows):
-#   baixe livekit-server.exe (github.com/livekit/livekit/releases) e rode:
-livekit-server --config ./livekit-host.yaml
+#   baixa o binário 1.13.10 se faltar e sobe em ws://localhost:7880
+npm run dev:sfu
 ```
 
 > **Por que o LiveKit nativo e não no Docker?** No Windows, o SFU em container

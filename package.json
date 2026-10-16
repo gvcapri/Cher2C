@@ -10,6 +10,7 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:desktop\"",
     "dev:server": "npm run --workspace=server dev",
     "dev:desktop": "npm run --workspace=desktop dev",
+    "dev:sfu": "node scripts/livekit-dev.mjs",
     "build": "npm run build:shared && npm run build:server && npm run build:desktop",
     "build:shared": "npm run --workspace=@cher2c/shared build",
     "build:server": "npm run --workspace=server build",

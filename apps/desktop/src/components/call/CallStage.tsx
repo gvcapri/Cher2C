@@ -122,7 +122,9 @@ export function CallStage() {
                   <div className={styles.featuredBar}>
                     <span className={styles.featuredLabel}>
                       🖥️{' '}
-                      {remoteShares[0].identity === userId
+                      {userId &&
+                      (remoteShares[0].identity === userId ||
+                        remoteShares[0].identity.startsWith(`${userId}#`))
                         ? 'Sua tela'
                         : `Tela de ${remoteShares[0].identity}`}
                     </span>

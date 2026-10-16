@@ -44,7 +44,7 @@ export interface VoiceCallCallbacks {
 }
 
 export interface VoiceParticipant {
-  identity: string // userId
+  identity: string // identity da sessão LiveKit (userId#sufixo — única por sessão)
   name: string
   isLocal: boolean
   isSpeaking: boolean

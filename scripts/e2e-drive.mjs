@@ -84,22 +84,51 @@ function cdpSession(wsUrl) {
           pending.delete(msg.id)
         }
       })
-      res({ send, close: () => ws.close() })
+      res({ send, close: () => ws.close(), ws })
     })
   })
 }
 
-async function waitForResult(session, who) {
+async function waitForResult(session, who, consoleLogs) {
   for (let i = 0; i < 120; i++) {
     const r = await session.send('Runtime.evaluate', {
       expression: 'window.__done ? JSON.stringify(window.__result) : null',
       returnByValue: true
     })
     if (r && r.result && r.result.value) return JSON.parse(r.result.value)
-    // coleta tambem erros de console p/ diagnostico
     await sleep(500)
   }
-  return { who, ok: false, error: 'timeout esperando __done' }
+  // timeout: coleta o log da página p/ diagnostico
+  let pageLog = []
+  try {
+    const l = await session.send('Runtime.evaluate', {
+      expression: 'JSON.stringify(window.__log || [])',
+      returnByValue: true
+    })
+    if (l && l.result && l.result.value) pageLog = JSON.parse(l.result.value)
+  } catch {}
+  return { who, ok: false, error: 'timeout esperando __done', pageLog, consoleLogs }
+}
+
+// captura erros/warnings do console de cada pagina (diagnostico de ICE/negociacao)
+function attachConsoleCollector(session, sink) {
+  session.ws.on('message', (m) => {
+    try {
+      const msg = JSON.parse(m.toString())
+      if (msg.method === 'Runtime.consoleAPICalled') {
+        const text = (msg.params.args || [])
+          .map((a) => a.value !== undefined ? String(a.value) : (a.description || a.type || ''))
+          .join(' ')
+        if (msg.params.type === 'error' || msg.params.type === 'warning') {
+          sink.push(`[${msg.params.type}] ${text}`)
+        }
+      }
+      if (msg.method === 'Runtime.exceptionThrown') {
+        const d = msg.params.exceptionDetails
+        sink.push(`[exception] ${d.text} ${d.exception && d.exception.description || ''}`)
+      }
+    } catch {}
+  })
 }
 
 const procs = []
@@ -114,14 +143,20 @@ try {
   const s2 = await cdpSession(ws2)
   await s1.send('Runtime.enable')
   await s2.send('Runtime.enable')
+  const consoleA = []
+  const consoleB = []
+  attachConsoleCollector(s1, consoleA)
+  attachConsoleCollector(s2, consoleB)
 
   const [r1, r2] = await Promise.all([
-    waitForResult(s1, 'A'),
-    waitForResult(s2, 'B')
+    waitForResult(s1, 'A', consoleA),
+    waitForResult(s2, 'B', consoleB)
   ])
 
   console.log('RESULT_A ' + JSON.stringify(r1))
   console.log('RESULT_B ' + JSON.stringify(r2))
+  if (consoleA.length) console.log('CONSOLE_A ' + JSON.stringify(consoleA.slice(-15)))
+  if (consoleB.length) console.log('CONSOLE_B ' + JSON.stringify(consoleB.slice(-15)))
   // Assercao FORTE: midia RTP real fluiu (pacotes recebidos > 0 em ambos),
   // nao apenas o evento de subscribe (que sem midia daria falsos positivos).
   const mediaFlowed =
