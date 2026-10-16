@@ -8,7 +8,6 @@ import { DebugMetricsPanel } from './components/DebugMetricsPanel'
 import { ToastProvider } from './components/ui'
 import { useKeyboardShortcuts } from './lib/useKeyboardShortcuts'
 import { checkHealth } from './api'
-import './styles/global.css'
 
 /**
  * Raiz do app:

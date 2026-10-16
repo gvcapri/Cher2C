@@ -1,4 +1,6 @@
-/* Reset + estilos globais — Cher2C */
+/* CSS de entrada (reset + globais) — Cher2C
+   ATENÇÃO: precisa ser importado UMA vez em main.tsx. */
+@import './tokens.css';
 
 *,
 *::before,
@@ -18,12 +20,19 @@ body,
   width: 100%;
 }
 
+/* Shell ocupa a janela inteira, sem scroll indesejado */
+#root {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 body {
-  font-family: var(--font-sans);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
-  color: var(--text-primary);
-  background: var(--bg-base);
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  font-size: var(--text-base, 14px);
+  line-height: var(--leading-normal, 1.5);
+  color: var(--text-primary, #f2f3f5);
+  background: var(--bg-base, #1e1f22);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
